@@ -90,13 +90,21 @@ var Monitor = (function(){
 		}
 		return results;
 	}
-	// Clear all logged informations
-	Monitor.Clear = function() {
-		data = {};
+	// Delete a record
+	Monitor.Clear = function(name) {
+		// for this function user must specify what is wants
+		if (typeof name === "undefined") {
+			throw "Monitor.Clear: You must specify the record reference";
+		}
+		if (!data[name]) {
+			console.error('Monitor: no records for "' + name + '"');
+			return null;
+		}
+		delete data[name];
 	}
-	// for debug
-	Monitor.Debug = function() {
-		console.log(data);
+	// Clear all logged informations
+	Monitor.ClearAll = function() {
+		data = {};
 	}
 	return Monitor;
 }());
