@@ -120,8 +120,8 @@ function RunTest() {
 function LogPushVersusUnshift() {
   var pushRecord = Monitor.Get("Array.push");
   var unshiftRecord = Monitor.Get("Array.unshift");
-  console.info("Push avg time " + (1000 * pushRecord.total_time / pushRecord.call_count).toFixed(2) + " ns");
-  console.info("Unshift avg time " + (1000 * unshiftRecord.total_time / unshiftRecord.call_count).toFixed(2) + " ns");
+  console.info("Push avg time " + (1000 * pushRecord.total_time / pushRecord.call_count).toFixed(2) + " microsec");
+  console.info("Unshift avg time " + (1000 * unshiftRecord.total_time / unshiftRecord.call_count).toFixed(2) + " microsec");
 }
 ```
 
