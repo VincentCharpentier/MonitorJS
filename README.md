@@ -40,7 +40,7 @@ Even if it is optionnal **it is recommended to provide a record name** since ano
 * `ClearAll()`
   > Description: Delete all records.
 
-**Performance**: The recording process is pretty fast (< 1 nanosecond to Start and Stop).
+**Performance**: The recording process is pretty fast (< 1 microsecond to Start and Stop).
 
 ### Reading Process
 
