@@ -4,7 +4,9 @@ MonitorJS is a lightweight javascript plugin to track your scripts performances.
 You may use it to seek & destroy code that is slowing down your app.
 ___
 
-**Note**: At the moment, MonitorJS only track time consumption. It may track memory usage in the future.
+>**Note**: 
+> * At the moment, MonitorJS only track time consumption. It may track memory usage in the future.
+> * MonitorJS does not currently support concurrent call to the same function (you can't call Monitor.Start("foo") twice if Monitor.End("foo") is not called in-between), I'm working on a new release to fix this
 
 MonitorJS creates a global variable `Monitor` from which you can call functions described below.
 
