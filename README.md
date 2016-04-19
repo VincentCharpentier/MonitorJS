@@ -6,7 +6,6 @@ ___
 
 >**Note**: 
 > * At the moment, MonitorJS only track time consumption. It may track memory usage in the future.
-> * MonitorJS does not currently support concurrent call to the same function (you can't call Monitor.Start("foo") twice if Monitor.End("foo") is not called in-between), I'm working on a new release to fix this
 
 MonitorJS creates a global variable `Monitor` from which you can call functions described below.
 
@@ -19,40 +18,44 @@ If `recordName` is not provided MonitorJS will try to get the caller function na
 Even if it is optionnal **it is recommended to provide a record name** since anonymous functions or strict mode can cause issues.
 
 
-* `Start(recordName : string)`
-  > >`recordName`: Optionnal (but recommended) **string** parameter
+* `Start(blockName? : String)`
+  > Start recording.
 
-  > Description: Start recording.
-
-* `Stop(recordName : string)`
-  > >`recordName`: Optionnal (but recommended) **string** parameter
-
-  > Description: Stop recording.
+  > `blockName`: Optionnal (but recommended) **string** parameter
   
-* `Cancel(recordName : string)`
-  > >`recordName`: Optionnal (but recommended) **string** parameter
+  > returns: Object which should be used as argument to Stop or Cancel recording (see Section "Concurrent Access" below)
 
-  > Description: Cancel recording.
 
-* `Clear(recordName : string)`
-  > >`recordName`: Mandatory **string** parameter
+* `Stop(input? : String | Object)`
+  > Stop recording.
 
-  > Description: Delete this record.
+  > `input`: Optionnal (but recommended) **string** or **object** parameter (see Section "Concurrent Access" below)
+
+  
+* `Cancel(input? : String | Object)`
+  > Cancel recording.
+
+  > `input`: Optionnal (but recommended) **string** or **object** parameter (see Section "Concurrent Access" below)
+
+* `Clear(blockName : String)`
+  > Delete this record.
+
+  > >`blockName`: Mandatory **string** parameter
   
 * `ClearAll()`
-  > Description: Delete all records.
+  > Delete all records.
 
 **Performance**: The recording process is pretty fast (< 1 microsecond to Start and Stop).
 
 ### Reading Process
 
-* `Get(recordName : string)`
-  > >`recordName`: Mandatory **string** parameter
+* `Get(blockName : string)`
+  > Get the specified record (see below for record object format)
 
-  > Description: Get the specified record (see below for record object format)
+  > >`blockName`: Mandatory **string** parameter
   
 * `GetAll()`
-  > Description: Get all records (see below for record object format)
+  > Get all records (see below for record object format)
 
 ### Record Object
 
@@ -69,9 +72,10 @@ A record is structured as follow:
 }
 ```
 
-### Examples
+### Basic Examples
 
-* **Track time consumption of a function in your app lifecycle:**
+* Simplest :
+
 ```js
 function SomeFunction() {
   Monitor.Start(); // recordName will be "SomeFunction"
@@ -82,7 +86,78 @@ function SomeFunction() {
   
   Monitor.Stop();
 }
+
+// Get the record anytime :
+console.log(Monitor.Get("SomeFunction"));
 ```
+**Warning:** unparameterized recording should not be used in strict mode, anonymous functions or concurrent environnement (eg if "SomeFunction" may be called more than once at a time - see section "Concurrent Access").
+
+#### String parameterized recording :
+
+```js
+function SomeFunction() {
+  Monitor.Start("Main"); // recordName will be "Main"
+  
+  for (let i = 0; i < 1e3; i++) {
+    Monitor.Start("Loop");
+    // loop stuff
+    // ...
+    Monitor.Stop("Loop");
+  }
+  // ...
+  Monitor.Stop("Main");
+}
+```
+**Warning:** string parameterized recording should not be used in concurrent environnement (eg if "SomeFunction" may be called more than once at a time - see section "Concurrent Access").
+
+#### Concurrent safe recording :
+```js
+function ConcurrentFunction() {
+  var mId = Monitor.Start("Main"); // recordName will be "Main"
+  // ...
+  Monitor.Stop(mId);
+}
+```
+
+###Concurrent Access
+
+If you are using MonitorJS in a concurrent environement you should always call Stop and Cancel with the value returned by Start.
+
+This object is used by MonitorJS to keep track of the current context.
+
+When you call Stop without this object, it will stop the oldest timer. But this behavior may lead to errors.
+
+```js
+function SomeFunction() {
+  Monitor.Start("Main"); // recordName will be "Main"
+  
+  // run concurrent things:
+  setTimeout(()=> {
+    doThings(1e3);
+  }, 1);
+  setTimeout(()=> {
+    doThings(1);
+  }, 1);
+  
+  Monitor.Stop("Main");
+}
+
+function doThings(x) {
+  var mId_doThings = Monitor.Start("doThings");
+  for (let i = 0; i < x; i++) {
+    var mId_loop = Monitor.Start("Loop");
+    // loop stuff
+    // ...
+    Monitor.Stop(mId_loop);
+  }
+  Monitor.Stop(mId_doThings);
+}
+```
+**Note:** this code is safe because we provide context object to Monitor.Stop where there is concurrent access.
+
+*section in progress*
+
+### More Examples
 
 * **Show stats of every records:**
 ```js
