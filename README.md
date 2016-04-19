@@ -129,6 +129,6 @@ function LogPushVersusUnshift() {
 
 FYI :
 ```
-Push avg time 0.48 ns
-Unshift avg time 3.16 ns
+Push avg time 0.48 microseconds
+Unshift avg time 3.16 microseconds
 ```
