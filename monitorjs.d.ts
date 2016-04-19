@@ -5,15 +5,21 @@ interface MonitorRecord
     total_time: number;
 }
 
+interface MonitorIdentifier
+{
+    name: string;
+    id: number;
+}
+
 interface MonitorStatic
 {
-    Cancel(recordName?: string): void;
-    Clear(recordName: string): void;
+    Cancel(input?: string | MonitorIdentifier): void;
+    Clear(blockName: string): void;
     ClearAll(): void;
-    Get(recordName: string): MonitorRecord;
+    Get(blockName: string): MonitorRecord;
     GetAll(): Array<MonitorRecord>;
-    Start(recordName?: string): void;
-    Stop(recordName?: string): void;
+    Start(blockName?: string): MonitorIdentifier;
+    Stop(input?: string | MonitorIdentifier): void;
 }
 
 declare var Monitor: MonitorStatic;

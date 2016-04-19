@@ -15,52 +15,113 @@ var Monitor = (function(){
 		}
 		if (!data[name]) {
 			data[name] = {
-				// current timer
-				ct: null,
 				// total time
 				tt: 0,
 				// call count
-				cc: 0
+				cc: 0,
+				// timer queue
+				queue: [],
+				// next timer id
+				// Note: start at 1 to avoid identifier.id == false
+				nextId: 1
 			};
 		}
-		data[name].ct = performance.now();
+		var id = data[name].nextId++;
+		data[name].queue.push({
+			id: id,
+			ct: performance.now()
+		});
+		return {
+			name: name,
+			id: id
+		};
 	};
 	// Stop a record
-	Monitor.Stop = function(name) {
+	Monitor.Stop = function(input) {
 		var stoppedAt = performance.now();
-		if (typeof name === "undefined") {
+		var typeInput = typeof input;
+		if (typeInput === "undefined") {
 			try {
 				// if no name, try to retrieve caller
 				// may be impossible in strict mode
-				name = arguments.callee.caller.name.toString();
+				input = arguments.callee.caller.name.toString();
 			}
 			catch(e) {
 				throw "Monitor.Stop : You must provide a referring name as first argument";
 			}
 		}
-		if (!data[name]) {
-			throw "Called Monitor.Stop before Monitor.Start"
+		var record = null, name;
+		// if only name given
+		if (typeInput === "string") {
+			name = input;
+			if (!data[name] || data[name].queue.length === 0) {
+				throw "Called Monitor.Stop before Monitor.Start"
+			}
+			record = data[name].queue.shift();
 		}
-		data[name].tt += stoppedAt - data[name].ct;
-		data[name].ct = null;
+		// if record identifier given
+		else if (typeInput === "object") {
+			if (!input.name || !input.id) {
+				throw "Monitor.Stop: input should be a string or an object returned by Monitor.Start";
+			}
+			name = input.name;
+			if (!data[name] || data[name].queue.length === 0) {
+				throw "Called Monitor.Stop before Monitor.Start"
+			}
+			for (var i = 0; i < data[name].queue.length; i++) {
+				if (data[name].queue[i].id === input.id) {
+					// return & remove from queue
+					record = data[name].queue.splice(i,1)[0];
+					break;
+				}
+			}
+			if (record === null) {
+				throw "Monitor.Stop: Unable to find record with provided identifier";
+			}
+		}
+		data[name].tt += stoppedAt - record.ct;
 		data[name].cc++;
 	}
 	// Cancel a record
-	Monitor.Cancel = function(name) {
-		if (typeof name === "undefined") {
+	Monitor.Cancel = function(input) {
+		var typeInput = typeof input;
+		if (typeInput === "undefined") {
 			try {
 				// if no name, try to retrieve caller
 				// may be impossible in strict mode
-				name = arguments.callee.caller.name.toString();
+				input = arguments.callee.caller.name.toString();
 			}
 			catch(e) {
-				throw "Monitor.Stop : You must provide a referring name as first argument";
+				throw "Monitor.Cancel : You must provide a referring name as first argument";
 			}
 		}
-		if (!data[name]) {
-			throw "Called Monitor.Cancel before Monitor.Start"
+		// if only name given
+		if (typeInput === "string") {
+			if (!data[input] || data[input].queue.length === 0) {
+				throw "Called Monitor.Cancel before Monitor.Start"
+			}
+			data[input].queue.shift();
 		}
-		data[name].ct = null;
+		// if record identifier given
+		else if (typeInput === "object") {
+			if (!input.name || !input.id) {
+				throw "Monitor.Cancel: input should be a string or an object returned by Monitor.Start";
+			}
+			if (!data[input.name] || data[input].queue.length === 0) {
+				throw "Called Monitor.Cancel before Monitor.Start"
+			}
+			var record = null;
+			for (var i = 0; i < data[input.name].queue.length; i++) {
+				if (data[input.name].queue[i].id === input.id) {
+					// return & remove from queue
+					record = data[input.name].queue.splice(i,1)[0];
+					break;
+				}
+			}
+			if (record === null) {
+				throw "Monitor.Cancel: Unable to find record with provided identifier";
+			}
+		}
 	}
 	// Get a record
 	Monitor.Get = function(name) {
