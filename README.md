@@ -9,6 +9,14 @@ ___
 
 MonitorJS creates a global variable `Monitor` from which you can call functions described below.
 
+### How to use it on your website
+
+Include `monitorjs.js` or `monitorjs.min.js` in your HTML :
+
+    <script type="text/javascript" src="monitorjs.min.js"></script>
+
+You are ready to go !
+
 ### Recording Process
 
 **Note**: 
